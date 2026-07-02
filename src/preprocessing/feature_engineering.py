@@ -10,8 +10,10 @@ Output: datasets/processed/feature_matrix.csv
 
 import pandas as pd
 import os
+from datetime import datetime, timezone
 
 PROCESSED_DIR = os.path.join("datasets", "processed")
+VERSIONS_DIR = os.path.join(PROCESSED_DIR, "versions")
 INPUT_PATH = os.path.join(PROCESSED_DIR, "merged_dataset.csv")
 OUTPUT_PATH = os.path.join(PROCESSED_DIR, "feature_matrix.csv")
 
@@ -102,5 +104,33 @@ if __name__ == "__main__":
     print(f"\nSaved feature matrix to: {OUTPUT_PATH}")
     print(f"Final shape: {df.shape}")
     print(f"Total columns: {len(df.columns)}")
+
+    # --- Dataset versioning ---
+    # Save a dated snapshot copy so we can always trace back which version
+    # of the data was used for any given model training run.
+    os.makedirs(VERSIONS_DIR, exist_ok=True)
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H%M")
+    version_filename = f"feature_matrix_{timestamp}.csv"
+    version_path = os.path.join(VERSIONS_DIR, version_filename)
+    df.to_csv(version_path, index=False)
+    print(f"Saved versioned snapshot to: {version_path}")
+
+    # Log this version's basic info to a running version log file
+    log_path = os.path.join(VERSIONS_DIR, "version_log.csv")
+    log_entry = pd.DataFrame([{
+        "version_file": version_filename,
+        "created_utc": timestamp,
+        "rows": df.shape[0],
+        "columns": df.shape[1],
+        "date_range_start": str(df["time_tag"].min()),
+        "date_range_end": str(df["time_tag"].max()),
+    }])
+    if os.path.exists(log_path):
+        log_entry.to_csv(log_path, mode="a", header=False, index=False)
+    else:
+        log_entry.to_csv(log_path, mode="w", header=True, index=False)
+    print(f"Logged version info to: {log_path}")
+    # --- end versioning ---
+
     print("\nSample of new feature columns:")
     print([c for c in df.columns if "roll" in c or "lag" in c or "roc" in c or "ema" in c][:10])
