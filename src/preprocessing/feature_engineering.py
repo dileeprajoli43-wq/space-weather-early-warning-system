@@ -17,8 +17,12 @@ OUTPUT_PATH = os.path.join(PROCESSED_DIR, "feature_matrix.csv")
 
 # Columns we'll build rolling/lag features for.
 # Pick the flux channels with the fewest missing values, plus key OMNI storm indicators.
-TARGET_COLS = ["flux_134keV", "flux_79keV", "flux_865keV"]
+TARGET_COLS = ["electron_flux_134keV", "electron_flux_79keV", "electron_flux_865keV"]
+PROTON_COLS = ["proton_flux_P1", "proton_flux_P5", "proton_flux_P9"]
+XRAY_COLS = ["xray_flux_0.05_0.4nm", "xray_flux_0.1_0.8nm"]
 STORM_COLS = ["Kp_index", "Dst_index_nT", "AE_index_nT", "BZ_nT"]
+
+FEATURE_COLS = TARGET_COLS + PROTON_COLS + XRAY_COLS + STORM_COLS
 
 FEATURE_COLS = TARGET_COLS + STORM_COLS
 
